@@ -1,50 +1,74 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const authMiddleware = require('./authMiddleware');
-const Conversation = require('../models/conversation');
-const User = require('../models/user');
+
+import Conversation from "../models/conversation.js";
 
 // Initiate a new conversation
-router.post('/start-conversation', authMiddleware, async (req, res) => {
+router.post('/start', async (req, res) => {
     try {
-        const { userId, messageContent } = req.body;
-        // const userId = req.user.id;
+        const { messageContent } = req.body;
 
-        let conversation = await Conversation.findOne({ user: userId }).exec();
-        if (!conversation) {
-            conversation = new Conversation({ user: userId, messages: [] });
-        }
+        const {userID} = req;
+        let conversation = new Conversation({ user: userID, messages: [] });
 
         conversation.messages.push({
-            sender: 'user',
+            role: 'system',
+            content: `You are a fashion outfit generator AI working for Flipkart.
+
+            Here is some information about the user:
+            - They are a 60 year old male
+            - They prefer decent clothes
+                        
+            Here are some popular fashion trends that may or may not be relevant:
+            - Intense Prints
+            - Pastel Tones
+            - Maintainable Design
+            - Tank Tops
+            - Borders
+            - Explanation Gems
+            - Lehengas
+            - Neon Tones
+            - Palazzo Pants
+            - Strong Shoulders
+            - Metallics
+            - Sheer Textures
+            - Customary Materials
+            - Intense Embellishments
+            - Unsettles
+            - Weaving
+            - Off-Shoulder Tops
+            
+            Please provide a list of potential products available for purchase on Flipkart, enclose every product with square brackets except for the main product/dress which should be enclosed in curly bracket.`
+        });
+
+        // await conversation.save();
+        // call open ai
+
+        conversation.messages.push({
+            role: 'user',
             content: messageContent
         });
 
         await conversation.save();
 
-        const user = await User.findById(userId);
-        user.conversations.push(conversation._id);
-        await user.save();
-
         res.status(200).json({ message: 'Conversation initiated successfully.' });
     } catch (error) {
-        res.status(500).json({ error: 'An error occurred while starting the conversation.' });
+        res.status(500).json({ error: error });
     }
 });
 
 // Add data to an existing conversation
-router.post('/add-to-conversation/:conversationId', authMiddleware, async (req, res) => {
+router.post('/add', async (req, res) => {
     try {
-        const { messageContent, userId } = req.body;
-        // const userId = req.user.id;
-        const conversationId = req.params.conversationId;
+        const { messageContent, conversationId } = req.body;
+        const {userID} = req;
 
         const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
             return res.status(404).json({ error: 'Conversation not found.' });
         }
 
-        if (conversation.user.toString() !== userId) {
+        if (conversation.user.toString() !== userID) {
             return res.status(403).json({ error: 'You are not authorized to add to this conversation.' });
         }
 
@@ -61,4 +85,4 @@ router.post('/add-to-conversation/:conversationId', authMiddleware, async (req, 
     }
 });
 
-module.exports = router;
+export default router;
