@@ -7,7 +7,7 @@ const secret = require('../config').secret;
 const userSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
     password: { type: String, required: true },
-    name: { type: String },
+    name: { type: String,  required: true },
 });
 
 // Hash the password before saving the user

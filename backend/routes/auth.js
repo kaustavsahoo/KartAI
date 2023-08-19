@@ -6,9 +6,9 @@ const router = express.Router();
 // Define a register endpoint under /auth/register
 router.post('/register', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username, name, password } = req.body;
 
-        const user = new User({ username, password });
+        const user = new User({ username, password, name });
         await user.save();
 
         const token = user.generateToken();
