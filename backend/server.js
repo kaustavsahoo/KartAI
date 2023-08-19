@@ -1,6 +1,7 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const routes = require('./routes');
+import express from 'express';
+import mongoose from 'mongoose';
+import routes from './routes/index.js';
+
 
 const app = express();
 
@@ -8,9 +9,9 @@ app.use(express.json());
 
 app.use(routes);
 
-const dbURL = require('./config').dbURL;
+import { dbUrl } from './config.js';
 
-mongoose.connect(dbURL, {
+mongoose.connect(dbUrl, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 }).then(() => {
