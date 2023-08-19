@@ -3,7 +3,7 @@ import authMiddleware from './authMiddleware.js';
 import user from './user.js';
 import auth from './auth.js';
 import flipkart from './flipkart/flipkart.js';
-import conversation from "./conversation.js";
+import conversation from "./chat/conversation.js";
 
 const router = express.Router();
 

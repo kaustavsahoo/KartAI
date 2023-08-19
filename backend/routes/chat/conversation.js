@@ -1,14 +1,15 @@
 import express from 'express';
 const router = express.Router();
 
-import Conversation from "../models/conversation.js";
+import openai from './openaiConfig.js';
+import Conversation from "../../models/conversation.js";
 
 // Initiate a new conversation
 router.post('/start', async (req, res) => {
     try {
         const { messageContent } = req.body;
 
-        const {userID} = req;
+        const { userID } = req;
         let conversation = new Conversation({ user: userID, messages: [] });
 
         conversation.messages.push({
@@ -41,18 +42,28 @@ router.post('/start', async (req, res) => {
             Please provide a list of potential products available for purchase on Flipkart, enclose every product with square brackets except for the main product/dress which should be enclosed in curly bracket.`
         });
 
-        // await conversation.save();
-        // call open ai
-
         conversation.messages.push({
             role: 'user',
             content: messageContent
         });
 
+        const messages = conversation.messages.map(({ role, content }) => {
+            return { role, content }
+        });
+
+        const result = await openai.chat.completions.create( {
+            model: "gpt-3.5-turbo",
+            messages: messages,
+            max_tokens: 200
+        })
+
+        conversation.messages.push(result.choices[0].message)
+
         await conversation.save();
 
-        res.status(200).json({ message: 'Conversation initiated successfully.' });
+        res.status(200).json({ data: result.choices[0].message, message: 'Conversation initiated successfully.', conversationId: conversation._id });
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: error });
     }
 });
@@ -61,7 +72,7 @@ router.post('/start', async (req, res) => {
 router.post('/add', async (req, res) => {
     try {
         const { messageContent, conversationId } = req.body;
-        const {userID} = req;
+        const { userID } = req;
 
         const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
@@ -73,14 +84,28 @@ router.post('/add', async (req, res) => {
         }
 
         conversation.messages.push({
-            sender: 'user',
+            role: 'user',
             content: messageContent
         });
 
+        const messages = conversation.messages.map(({ role, content }) => {
+            return { role, content }
+        });
+
+        const result = await openai.chat.completions.create( {
+            model: "gpt-3.5-turbo",
+            messages: messages,
+            max_tokens: 200
+        })
+
+        conversation.messages.push(result.choices[0].message)
+
+
         await conversation.save();
 
-        res.status(200).json({ message: 'Message added to the conversation.' });
+        res.status(200).json({ data: result.choices[0].message, message: 'Message added to the conversation.' });
     } catch (error) {
+        console.log(error)
         res.status(500).json({ error: 'An error occurred while adding to the conversation.' });
     }
 });
